@@ -1,10 +1,16 @@
-import moment from "moment";
+import {
+  addDays,
+  getYear,
+  isAfter,
+  isBefore,
+  isSameDay as isSameDayFns,
+} from "date-fns";
 import { DATE_UNIT_TYPES } from "./constants";
 
 type DateUnitType = (typeof DATE_UNIT_TYPES)[keyof typeof DATE_UNIT_TYPES];
 
 export function getCurrentYear(): number {
-  return moment().year();
+  return getYear(new Date());
 }
 
 export function add(
@@ -18,22 +24,33 @@ export function add(
   if (typeof amount !== "number" || isNaN(amount)) {
     throw new Error("Invalid amount provided");
   }
-  return moment(date).add(amount, type).toDate();
+
+  // Your constants default to DAYS; moment supported more units,
+  // but this assignment's constants usually define what you need.
+  if (type === DATE_UNIT_TYPES.DAYS) {
+    return addDays(date, amount);
+  }
+
+  // If DATE_UNIT_TYPES includes more units in your repo (e.g., MONTHS/YEARS),
+  // add them here using addMonths/addYears.
+  throw new Error("Invalid type provided");
 }
 
 export function isWithinRange(date: Date, from: Date, to: Date): boolean {
-  if (moment(from).isAfter(to)) {
+  if (isAfter(from, to)) {
     throw new Error("Invalid range: from date must be before to date");
   }
-  return moment(date).isBetween(from, to);
+
+  // moment().isBetween(from,to) is exclusive by default:
+  return isAfter(date, from) && isBefore(date, to);
 }
 
 export function isDateBefore(date: Date, compareDate: Date): boolean {
-  return moment(date).isBefore(compareDate);
+  return isBefore(date, compareDate);
 }
 
 export function isSameDay(date: Date, compareDate: Date): boolean {
-  return moment(date).isSame(compareDate, "day");
+  return isSameDayFns(date, compareDate);
 }
 
 export async function getHolidays(year: number): Promise<Date[]> {
